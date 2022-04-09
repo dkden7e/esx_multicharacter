@@ -37,8 +37,8 @@ if ESX.GetConfig().Multichar then
 		ESX.UI.Menu.CloseAll()
 		ESX.UI.HUD.SetDisplay(0.0)
 		StartLoop()
-		ShutdownLoadingScreen()
-		ShutdownLoadingScreenNui()
+		--ShutdownLoadingScreen()
+		--ShutdownLoadingScreenNui()
 		TriggerEvent('esx:loadingScreenOff')
 		Citizen.Wait(200)
 		TriggerServerEvent("esx_multicharacter:SetupCharacters")
@@ -168,7 +168,7 @@ if ESX.GetConfig().Multichar then
 				SetPedAoBlobRendering(playerPed, false)
 				SetEntityAlpha(playerPed, 0)
 				TriggerServerEvent('esx_multicharacter:CharacterChosen', 1, true)
-				TriggerEvent('esx_identity:showRegisterIdentity')
+				TriggerEvent('esx_identity:showRegisterIdentity2')
 			end)
 		else
 			for k,v in pairs(Characters) do

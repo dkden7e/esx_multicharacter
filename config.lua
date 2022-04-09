@@ -1,10 +1,12 @@
 Config = {}
 Config.Locale = 'en'
 
+local isServer = IsDuplicityVersion()
+
 -- Allows players to delete their characters
 Config.CanDelete = true
 
-if IsDuplicityVersion() then
+if isServer then
 	-- This is the default number of slots for EVERY player
 	-- If you want to manage extra slots for specific players you can do it by using '/setslots' and '/remslots' commands
 	Config.Slots = 4
@@ -15,7 +17,7 @@ if IsDuplicityVersion() then
 	--------------------
 
 	-- Default identifier to store for characters - this should always match es_extended (recommended: license)
-	Config.Identifier = 'license'
+	Config.Identifier = 'steam'
 
 else
 	-- Sets the location for the character selection scene

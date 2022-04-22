@@ -16,7 +16,7 @@ if ESX.GetConfig().Multichar then
 		end
 	end)
 
-	local canRelog, cam, spawned = true, nil, nil
+	local canRelog, cam, spawned, deletedChar = true, nil, nil, false
 	local Characters =  {}
 
 	RegisterNetEvent('esx_multicharacter:SetupCharacters')
@@ -115,7 +115,7 @@ if ESX.GetConfig().Multichar then
 				end
 				DoScreenFadeIn(400)
 			end)
-		repeat Citizen.Wait(200) until not IsScreenFadedOut()
+			repeat Citizen.Wait(200) until not IsScreenFadedOut()
 
 		elseif Characters[index] and Characters[index].skin then
 			if Characters[spawned] and Characters[spawned].model then
@@ -168,7 +168,11 @@ if ESX.GetConfig().Multichar then
 				SetPedAoBlobRendering(playerPed, false)
 				SetEntityAlpha(playerPed, 0)
 				TriggerServerEvent('esx_multicharacter:CharacterChosen', 1, true)
-				TriggerEvent('esx_identity:showRegisterIdentity2')
+				if not deletedChar then
+					TriggerEvent('esx_identity:showRegisterIdentity2')
+				else
+					TriggerEvent('esx_identity:showRegisterIdentity')
+				end
 			end)
 		else
 			for k,v in pairs(Characters) do
@@ -176,7 +180,7 @@ if ESX.GetConfig().Multichar then
 					if v.skin.model then v.model = v.skin.model elseif v.skin.sex == 1 then v.model =  `mp_f_freemode_01` else v.model = `mp_m_freemode_01` end
 				end
 				if spawned == false then SetupCharacter(Character) end
-				local label = v.firstname..' '..v.lastname
+				local label = (v.firstname and v.firstname or '')..' '..(v.lastname and v.lastname or '')
 				if Characters[k].disabled then
 					elements[#elements+1] = {label = label, value = v.id}
 				else
@@ -221,6 +225,7 @@ if ESX.GetConfig().Multichar then
 							}, function(data, menu)
 								if data.current.value then
 									TriggerServerEvent('esx_multicharacter:DeleteCharacter', data.current.value)
+									deletedChar = true
 									spawned = false
 									ESX.UI.Menu.CloseAll()
 								else
@@ -270,6 +275,7 @@ if ESX.GetConfig().Multichar then
 	AddEventHandler('esx:playerLoaded', function(playerData, isNew, skin)
 		local spawn = playerData.coords or Config.Spawn
 		if isNew or not skin or #skin == 1 then
+			local cancel = false
 			local finished = false
 			local sex = skin.sex or 0
 			if sex == 0 then model = `mp_m_freemode_01` else model = `mp_f_freemode_01` end
@@ -286,8 +292,36 @@ if ESX.GetConfig().Multichar then
 				playerPed = PlayerPedId()
 				SetPedAoBlobRendering(playerPed, true)
 				ResetEntityAlpha(playerPed)
+				TriggerServerEvent('esx_skin:save', skin)
 				TriggerEvent('esx_skin:openSaveableMenu', function()
-					finished = true end, function() finished = true
+					DoScreenFadeOut(100)
+					Citizen.Wait(100)
+					TriggerEvent("cutsceneAndSpawn", vector3(434.6689, -624.2460, 28.5001), function() finished = true end)
+				end, function()
+					canRelog = false
+					spawned = tonumber(playerData.identifier:gsub('char', ''):sub(1, -17))
+					local toDelete = spawned
+					TriggerServerEvent('esx_multicharacter:relog')
+					Citizen.Wait(100)
+					TriggerServerEvent('esx_multicharacter:DeleteCharacter', toDelete)
+					spawned = false
+					ESX.UI.Menu.CloseAll()
+					local count = 0
+					for k,v in pairs(Characters) do
+						if v then
+							count += 1
+						end
+					end
+					if count == 0 then
+						Citizen.CreateThread(function()
+							Citizen.Wait(2000)
+							TriggerEvent('esx_identity:showRegisterIdentity')
+						end)
+					end
+					Citizen.CreateThread(function()
+						Citizen.Wait(10000)
+						canRelog = true
+					end)
 				end)
 			end)
 			repeat Citizen.Wait(200) until finished
@@ -325,7 +359,8 @@ if ESX.GetConfig().Multichar then
 			if canRelog == true then
 				canRelog = false
 				TriggerServerEvent('esx_multicharacter:relog')
-				ESX.SetTimeout(10000, function()
+				Citizen.CreateThread(function()
+					Citizen.Wait(10000)
 					canRelog = true
 				end)
 			end
